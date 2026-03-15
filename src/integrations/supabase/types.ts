@@ -14,7 +14,66 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      cards: {
+        Row: {
+          back: string
+          created_at: string | null
+          deck: string | null
+          difficulty: string | null
+          front: string
+          id: string
+          score: number | null
+          user_id: string
+        }
+        Insert: {
+          back: string
+          created_at?: string | null
+          deck?: string | null
+          difficulty?: string | null
+          front: string
+          id?: string
+          score?: number | null
+          user_id: string
+        }
+        Update: {
+          back?: string
+          created_at?: string | null
+          deck?: string | null
+          difficulty?: string | null
+          front?: string
+          id?: string
+          score?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      sessions: {
+        Row: {
+          created_at: string | null
+          difficulty: string | null
+          id: string
+          pct: number
+          total: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          difficulty?: string | null
+          id?: string
+          pct: number
+          total: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          difficulty?: string | null
+          id?: string
+          pct?: number
+          total?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
