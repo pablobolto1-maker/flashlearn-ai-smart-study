@@ -1,7 +1,7 @@
 import mammoth from 'mammoth';
+import * as XLSX from 'xlsx';
 
 export async function extractPDF(file: File): Promise<string> {
-  // Load PDF.js dynamically
   if (!(window as any).pdfjsLib) {
     await new Promise<void>((resolve, reject) => {
       const script = document.createElement('script');
@@ -35,17 +35,6 @@ export async function extractWord(file: File): Promise<string> {
 }
 
 export async function extractExcel(file: File): Promise<string> {
-  // Load SheetJS dynamically
-  if (!(window as any).XLSX) {
-    await new Promise<void>((resolve, reject) => {
-      const script = document.createElement('script');
-      script.src = 'https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js';
-      script.onload = () => resolve();
-      script.onerror = () => reject(new Error('Impossible de charger SheetJS'));
-      document.head.appendChild(script);
-    });
-  }
-  const XLSX = (window as any).XLSX;
   const arrayBuffer = await file.arrayBuffer();
   const wb = XLSX.read(arrayBuffer);
   let text = '';
