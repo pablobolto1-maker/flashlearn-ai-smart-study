@@ -36,7 +36,7 @@ export default function Navbar() {
       <div className="max-w-5xl mx-auto flex items-center justify-between px-4 h-14">
         <Link to="/" className="flex items-center gap-2.5 btn-hover">
           <Logo />
-          <span className="font-semibold text-foreground text-base">FlashLearn AI</span>
+          <span className="font-semibold text-foreground text-base">FlashLearn <span className="text-primary font-normal">AI</span></span>
         </Link>
         <div className="flex items-center gap-1">
           {navLinks.map(l => (
