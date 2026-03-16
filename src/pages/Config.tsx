@@ -59,7 +59,8 @@ export default function Config() {
       clearInterval(interval);
       setPercent(100);
       setTimeout(() => {
-        navigate('/review', { state: { cards: saved, mode, timer, difficulty } });
+        const path = mode === 'exam' ? '/exam' : '/review';
+        navigate(path, { state: { cards: saved, mode, timer, difficulty } });
       }, 300);
     } catch (err: any) {
       clearInterval(interval);
