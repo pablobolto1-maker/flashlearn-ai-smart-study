@@ -142,7 +142,7 @@ export default function Review() {
       {/* Flip Card */}
       <div className="perspective-1000 mb-6" style={{ perspective: '1000px' }} onClick={() => !flipped && !answered && setFlipped(true)}>
         <div
-          className="relative w-full min-h-[280px] cursor-pointer transition-transform duration-[0.46s]"
+          className="relative w-full min-h-[280px] cursor-pointer transition-transform duration-500"
           style={{
             transformStyle: 'preserve-3d',
             transform: flipped ? 'rotateY(180deg)' : 'rotateY(0)',
