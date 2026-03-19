@@ -14,6 +14,8 @@ export default function ExamReview() {
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<boolean[]>([]);
   const [timeLeft, setTimeLeft] = useState(30);
+  const [explanation, setExplanation] = useState('');
+  const [isStreaming, setIsStreaming] = useState(false);
 
   const card: CardType | undefined = cards[index];
 
