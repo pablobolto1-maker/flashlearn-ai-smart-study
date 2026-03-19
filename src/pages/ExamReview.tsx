@@ -63,6 +63,8 @@ export default function ExamReview() {
       setIndex(i => i + 1);
       setAnswer('');
       setFeedback(null);
+      setExplanation('');
+      setIsStreaming(false);
     }
   };
 
