@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { getExplanation } from '@/lib/ai';
+import { getExplanationStream } from '@/lib/ai';
 import type { CardType, Difficulty } from '@/lib/types';
 
 function getDifficultyFromHistory(history: boolean[], currentDiff: Difficulty): { diff: Difficulty; changed: boolean } {
