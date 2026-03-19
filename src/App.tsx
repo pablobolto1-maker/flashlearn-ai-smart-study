@@ -14,6 +14,7 @@ import Results from "@/pages/Results";
 import Library from "@/pages/Library";
 import Progress from "@/pages/Progress";
 import EditCard from "@/pages/EditCard";
+import ResetPassword from "@/pages/ResetPassword";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
