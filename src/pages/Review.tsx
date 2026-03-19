@@ -77,14 +77,14 @@ export default function Review() {
 
     // Get explanation if wrong
     if (!correct && card) {
-      setExpLoading(true);
-      try {
-        const exp = await getExplanation(card.front, card.back);
-        setExplanation(exp);
-      } catch {
-        setExplanation('');
-      }
-      setExpLoading(false);
+      setExplanation('');
+      setIsStreaming(true);
+      getExplanationStream(
+        card.front,
+        card.back,
+        (text) => setExplanation(prev => prev + text),
+        () => setIsStreaming(false)
+      ).catch(() => setIsStreaming(false));
     }
 
     // Auto-advance after a delay
