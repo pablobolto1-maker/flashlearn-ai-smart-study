@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { getExplanation } from '@/lib/ai';
+import { getExplanationStream } from '@/lib/ai';
 import type { CardType, Difficulty } from '@/lib/types';
 
 function getDifficultyFromHistory(history: boolean[], currentDiff: Difficulty): { diff: Difficulty; changed: boolean } {
@@ -33,7 +33,7 @@ export default function Review() {
   const [currentDiff, setCurrentDiff] = useState<Difficulty>(initDiff as Difficulty);
   const [diffNotice, setDiffNotice] = useState('');
   const [explanation, setExplanation] = useState('');
-  const [expLoading, setExpLoading] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(false);
   const [timeLeft, setTimeLeft] = useState(30);
 
   const card: CardType | undefined = cards[index];
@@ -77,14 +77,14 @@ export default function Review() {
 
     // Get explanation if wrong
     if (!correct && card) {
-      setExpLoading(true);
-      try {
-        const exp = await getExplanation(card.front, card.back);
-        setExplanation(exp);
-      } catch {
-        setExplanation('');
-      }
-      setExpLoading(false);
+      setExplanation('');
+      setIsStreaming(true);
+      getExplanationStream(
+        card.front,
+        card.back,
+        (text) => setExplanation(prev => prev + text),
+        () => setIsStreaming(false)
+      ).catch(() => setIsStreaming(false));
     }
 
     // Auto-advance after a delay
@@ -96,6 +96,7 @@ export default function Review() {
         setFlipped(false);
         setAnswered(false);
         setExplanation('');
+        setIsStreaming(false);
       }
     }, correct ? 800 : 2500);
   }, [results, history, currentDiff, index, cards, card, navigate]);
@@ -175,13 +176,13 @@ export default function Review() {
       )}
 
       {/* Explanation */}
-      {explanation && (
+      {(explanation || isStreaming) && (
         <div className="mt-4 bg-warning/10 border border-warning/25 rounded-card px-4 py-3 animate-fadeIn">
-          <p className="text-sm text-foreground leading-relaxed">{explanation}</p>
+          <p className="text-sm text-foreground leading-relaxed">
+            {explanation}
+            {isStreaming && <span className="animate-pulse">▌</span>}
+          </p>
         </div>
-      )}
-      {expLoading && (
-        <div className="mt-4 text-center text-sm text-muted-foreground animate-fadeIn">Chargement de l'explication...</div>
       )}
     </div>
   );

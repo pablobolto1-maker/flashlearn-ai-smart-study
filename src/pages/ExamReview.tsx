@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { evaluateAnswer } from '@/lib/ai';
+import { evaluateAnswer, getExplanationStream } from '@/lib/ai';
 import type { CardType } from '@/lib/types';
 
 export default function ExamReview() {
@@ -14,6 +14,8 @@ export default function ExamReview() {
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<boolean[]>([]);
   const [timeLeft, setTimeLeft] = useState(30);
+  const [explanation, setExplanation] = useState('');
+  const [isStreaming, setIsStreaming] = useState(false);
 
   const card: CardType | undefined = cards[index];
 
@@ -37,6 +39,16 @@ export default function ExamReview() {
       const result = await evaluateAnswer(card.front, card.back, answer);
       setFeedback(result);
       setResults([...results, result.correct]);
+      if (!result.correct && card) {
+        setExplanation('');
+        setIsStreaming(true);
+        getExplanationStream(
+          card.front,
+          card.back,
+          (text) => setExplanation(prev => prev + text),
+          () => setIsStreaming(false)
+        ).catch(() => setIsStreaming(false));
+      }
     } catch {
       setFeedback({ correct: false, feedback: 'Erreur lors de l\'évaluation' });
       setResults([...results, false]);
@@ -51,6 +63,8 @@ export default function ExamReview() {
       setIndex(i => i + 1);
       setAnswer('');
       setFeedback(null);
+      setExplanation('');
+      setIsStreaming(false);
     }
   };
 
@@ -110,6 +124,14 @@ export default function ExamReview() {
             <div className="bg-card border border-border rounded-card px-4 py-3 mb-3">
               <span className="text-xs text-muted-foreground">Bonne réponse :</span>
               <p className="text-sm text-foreground mt-1">{card.back}</p>
+            </div>
+          )}
+          {!feedback.correct && (explanation || isStreaming) && (
+            <div className="bg-warning/10 border border-warning/25 rounded-card px-4 py-3 mb-3">
+              <p className="text-sm text-foreground leading-relaxed">
+                {explanation}
+                {isStreaming && <span className="animate-pulse">▌</span>}
+              </p>
             </div>
           )}
           <button onClick={handleContinue} className="w-full bg-primary text-primary-foreground py-2.5 rounded-btn text-sm font-medium btn-hover transition-all">
