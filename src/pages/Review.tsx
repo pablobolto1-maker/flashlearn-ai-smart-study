@@ -176,13 +176,13 @@ export default function Review() {
       )}
 
       {/* Explanation */}
-      {explanation && (
+      {(explanation || isStreaming) && (
         <div className="mt-4 bg-warning/10 border border-warning/25 rounded-card px-4 py-3 animate-fadeIn">
-          <p className="text-sm text-foreground leading-relaxed">{explanation}</p>
+          <p className="text-sm text-foreground leading-relaxed">
+            {explanation}
+            {isStreaming && <span className="animate-pulse">▌</span>}
+          </p>
         </div>
-      )}
-      {expLoading && (
-        <div className="mt-4 text-center text-sm text-muted-foreground animate-fadeIn">Chargement de l'explication...</div>
       )}
     </div>
   );

@@ -58,6 +58,30 @@ Donne une explication pédagogique en 2-3 phrases pour aider l'étudiant à comp
   return await callGemini(prompt);
 }
 
+export async function getExplanationStream(
+  question: string,
+  answer: string,
+  onChunk: (text: string) => void,
+  onDone: () => void
+): Promise<void> {
+  const prompt = `Tu es un tuteur pédagogique bienveillant. L'étudiant n'a pas su répondre à cette question.
+Question : "${question}"
+Bonne réponse : "${answer}"
+
+Commence OBLIGATOIREMENT par "Ce n'est pas cela," ou une formulation similaire indiquant que la réponse était incorrecte. Ne dis JAMAIS "excellente réponse" ou quoi que ce soit de positif sur la réponse de l'étudiant.
+Donne une explication pédagogique en 2-3 phrases pour aider l'étudiant à comprendre et mémoriser la bonne réponse.`;
+
+  const response = await ai.models.generateContentStream({
+    model: "gemini-2.5-flash",
+    contents: prompt,
+  });
+  for await (const chunk of response) {
+    const text = chunk.text ?? '';
+    if (text) onChunk(text);
+  }
+  onDone();
+}
+
 export async function evaluateAnswer(question: string, correctAnswer: string, studentAnswer: string): Promise<{ correct: boolean; feedback: string }> {
   const prompt = `Tu es un correcteur. Compare la réponse de l'étudiant avec la bonne réponse.
 Question : "${question}"
