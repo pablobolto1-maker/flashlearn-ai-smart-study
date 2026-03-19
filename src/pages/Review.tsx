@@ -96,6 +96,7 @@ export default function Review() {
         setFlipped(false);
         setAnswered(false);
         setExplanation('');
+        setIsStreaming(false);
       }
     }, correct ? 800 : 2500);
   }, [results, history, currentDiff, index, cards, card, navigate]);
