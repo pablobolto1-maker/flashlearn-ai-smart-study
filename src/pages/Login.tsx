@@ -89,6 +89,31 @@ export default function Login() {
                 className="w-full bg-background border border-border rounded-input px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary transition-colors"
                 placeholder="Min. 6 caractères"
               />
+              {isLogin && (
+                <div className="flex justify-end mt-1">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!email) {
+                        toast.error('Veuillez entrer votre email d\'abord');
+                        return;
+                      }
+                      try {
+                        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                          redirectTo: window.location.origin + '/reset-password',
+                        });
+                        if (error) throw error;
+                        toast.success('Un email de réinitialisation a été envoyé');
+                      } catch (err: any) {
+                        toast.error(err.message || 'Erreur lors de l\'envoi');
+                      }
+                    }}
+                    className="text-xs text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    Mot de passe oublié ?
+                  </button>
+                </div>
+              )}
             </div>
             <button
               type="submit"
