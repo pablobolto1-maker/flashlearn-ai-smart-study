@@ -126,6 +126,14 @@ export default function ExamReview() {
               <p className="text-sm text-foreground mt-1">{card.back}</p>
             </div>
           )}
+          {!feedback.correct && (explanation || isStreaming) && (
+            <div className="bg-warning/10 border border-warning/25 rounded-card px-4 py-3 mb-3">
+              <p className="text-sm text-foreground leading-relaxed">
+                {explanation}
+                {isStreaming && <span className="animate-pulse">▌</span>}
+              </p>
+            </div>
+          )}
           <button onClick={handleContinue} className="w-full bg-primary text-primary-foreground py-2.5 rounded-btn text-sm font-medium btn-hover transition-all">
             Continuer
           </button>
