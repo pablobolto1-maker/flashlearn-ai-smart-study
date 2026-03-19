@@ -33,7 +33,7 @@ export default function Review() {
   const [currentDiff, setCurrentDiff] = useState<Difficulty>(initDiff as Difficulty);
   const [diffNotice, setDiffNotice] = useState('');
   const [explanation, setExplanation] = useState('');
-  const [expLoading, setExpLoading] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(false);
   const [timeLeft, setTimeLeft] = useState(30);
 
   const card: CardType | undefined = cards[index];
