@@ -35,6 +35,7 @@ function AppRoutes() {
     return (
       <Routes>
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="*" element={<Login />} />
       </Routes>
     );
