@@ -14,6 +14,7 @@ import Results from "@/pages/Results";
 import Library from "@/pages/Library";
 import Progress from "@/pages/Progress";
 import EditCard from "@/pages/EditCard";
+import ResetPassword from "@/pages/ResetPassword";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,7 +30,14 @@ function AppRoutes() {
     );
   }
 
-  if (!user) return <Login />;
+  if (!user) {
+    return (
+      <Routes>
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="*" element={<Login />} />
+      </Routes>
+    );
+  }
 
   return (
     <>
