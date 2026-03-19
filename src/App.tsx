@@ -15,6 +15,7 @@ import Library from "@/pages/Library";
 import Progress from "@/pages/Progress";
 import EditCard from "@/pages/EditCard";
 import ResetPassword from "@/pages/ResetPassword";
+import ForgotPassword from "@/pages/ForgotPassword";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +35,7 @@ function AppRoutes() {
     return (
       <Routes>
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="*" element={<Login />} />
       </Routes>
     );

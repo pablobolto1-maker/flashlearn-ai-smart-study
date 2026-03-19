@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 
 export default function Login() {
   const [isLogin, setIsLogin] = useState(true);
@@ -93,21 +91,7 @@ export default function Login() {
                 <div className="flex justify-end mt-1">
                   <button
                     type="button"
-                    onClick={async () => {
-                      if (!email) {
-                        toast.error('Veuillez entrer votre email d\'abord');
-                        return;
-                      }
-                      try {
-                        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-                          redirectTo: window.location.origin + '/reset-password',
-                        });
-                        if (error) throw error;
-                        toast.success('Un email de réinitialisation a été envoyé');
-                      } catch (err: any) {
-                        toast.error(err.message || 'Erreur lors de l\'envoi');
-                      }
-                    }}
+                    onClick={() => navigate('/forgot-password')}
                     className="text-xs text-muted-foreground hover:text-primary transition-colors"
                   >
                     Mot de passe oublié ?
