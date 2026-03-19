@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { evaluateAnswer } from '@/lib/ai';
+import { evaluateAnswer, getExplanationStream } from '@/lib/ai';
 import type { CardType } from '@/lib/types';
 
 export default function ExamReview() {
