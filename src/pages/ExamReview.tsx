@@ -39,6 +39,16 @@ export default function ExamReview() {
       const result = await evaluateAnswer(card.front, card.back, answer);
       setFeedback(result);
       setResults([...results, result.correct]);
+      if (!result.correct && card) {
+        setExplanation('');
+        setIsStreaming(true);
+        getExplanationStream(
+          card.front,
+          card.back,
+          (text) => setExplanation(prev => prev + text),
+          () => setIsStreaming(false)
+        ).catch(() => setIsStreaming(false));
+      }
     } catch {
       setFeedback({ correct: false, feedback: 'Erreur lors de l\'évaluation' });
       setResults([...results, false]);
