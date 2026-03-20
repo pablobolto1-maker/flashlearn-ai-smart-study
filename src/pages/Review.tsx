@@ -24,6 +24,7 @@ const diffLabels: Record<string, { label: string; color: string; bg: string }> =
 export default function Review() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { updateCard } = useCards();
   const { cards = [], mode, timer: hasTimer, difficulty: initDiff = 'easy' } = (location.state as any) || {};
 
   const [index, setIndex] = useState(0);
