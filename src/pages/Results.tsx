@@ -18,6 +18,7 @@ export default function Results() {
   const { saveSession, fetchSessions, sessions } = useSessions();
   const [tab, setTab] = useState<'all' | 'wrong' | 'right'>('all');
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState(false);
   const [barWidth, setBarWidth] = useState(0);
 
   const correct = results.filter(Boolean).length;
@@ -26,11 +27,20 @@ export default function Results() {
   const advice = scoreAdvice(pct);
 
   useEffect(() => {
-    if (!saved && results.length > 0) {
-      saveSession({ pct, total: results.length, difficulty }).catch(() => {});
-      setSaved(true);
-      fetchSessions().catch(() => {});
-    }
+    const save = async () => {
+      if (!saved && results.length > 0) {
+        setSaved(true);
+        try {
+          await saveSession({ pct, total: results.length, difficulty });
+        } catch {
+          setSaveError(true);
+        }
+        try {
+          await fetchSessions();
+        } catch {}
+      }
+    };
+    save();
     setTimeout(() => setBarWidth(pct), 100);
   }, []);
 
