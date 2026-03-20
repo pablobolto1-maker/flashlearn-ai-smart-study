@@ -61,6 +61,9 @@ export default function ExamReview() {
     return () => clearInterval(t);
   }, [index, hasTimer, feedback, handleSubmit]);
 
+  if (!cards.length) { navigate('/'); return null; }
+  if (!card) return null;
+
   const handleContinue = () => {
     streamAbortRef.current = true;
     if (index + 1 >= cards.length) {
