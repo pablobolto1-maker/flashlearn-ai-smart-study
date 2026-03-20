@@ -43,6 +43,10 @@ export default function ExamReview() {
       const result = await evaluateAnswer(card.front, card.back, answer);
       setFeedback(result);
       setResults([...results, result.correct]);
+      // Update card score in DB
+      if (card.id) {
+        updateCard(card.id, { score: (card.score || 0) + (result.correct ? 1 : -1) }).catch(() => {});
+      }
       if (!result.correct && card) {
         setExplanation('');
         setIsStreaming(true);

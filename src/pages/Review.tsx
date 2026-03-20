@@ -72,6 +72,11 @@ export default function Review() {
     setResults(newResults);
     setHistory(newHistory);
 
+    // Update card score in DB
+    if (card.id) {
+      updateCard(card.id, { score: (card.score || 0) + (correct ? 1 : -1) }).catch(() => {});
+    }
+
     // Adaptive difficulty
     const { diff, changed } = getDifficultyFromHistory(newHistory, currentDiff);
     if (changed) {
