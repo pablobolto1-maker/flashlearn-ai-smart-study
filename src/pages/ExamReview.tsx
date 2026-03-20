@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { evaluateAnswer, getExplanationStream } from '@/lib/ai';
 import type { CardType } from '@/lib/types';
@@ -16,6 +16,7 @@ export default function ExamReview() {
   const [timeLeft, setTimeLeft] = useState(30);
   const [explanation, setExplanation] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
+  const streamAbortRef = useRef(false);
 
   const card: CardType | undefined = cards[index];
 
@@ -34,6 +35,7 @@ export default function ExamReview() {
 
   const handleSubmit = async () => {
     if (loading) return;
+    streamAbortRef.current = false;
     setLoading(true);
     try {
       const result = await evaluateAnswer(card.front, card.back, answer);
@@ -45,9 +47,9 @@ export default function ExamReview() {
         getExplanationStream(
           card.front,
           card.back,
-          (text) => setExplanation(prev => prev + text),
-          () => setIsStreaming(false)
-        ).catch(() => setIsStreaming(false));
+          (text) => { if (!streamAbortRef.current) setExplanation(prev => prev + text); },
+          () => { if (!streamAbortRef.current) setIsStreaming(false); }
+        ).catch(() => { if (!streamAbortRef.current) setIsStreaming(false); });
       }
     } catch {
       setFeedback({ correct: false, feedback: 'Erreur lors de l\'évaluation' });
@@ -57,6 +59,7 @@ export default function ExamReview() {
   };
 
   const handleContinue = () => {
+    streamAbortRef.current = true;
     if (index + 1 >= cards.length) {
       navigate('/results', { state: { cards, results: [...results], difficulty } });
     } else {

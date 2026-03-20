@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { getExplanationStream } from '@/lib/ai';
 import type { CardType, Difficulty } from '@/lib/types';
@@ -60,7 +60,10 @@ export default function Review() {
     return () => window.removeEventListener('keydown', handler);
   }, [flipped, answered, index]);
 
+  const streamAbortRef = useRef(false);
+
   const handleAnswer = useCallback(async (correct: boolean) => {
+    streamAbortRef.current = false;
     setAnswered(true);
     const newResults = [...results, correct];
     const newHistory = [...history, correct];
@@ -82,13 +85,14 @@ export default function Review() {
       getExplanationStream(
         card.front,
         card.back,
-        (text) => setExplanation(prev => prev + text),
-        () => setIsStreaming(false)
-      ).catch(() => setIsStreaming(false));
+        (text) => { if (!streamAbortRef.current) setExplanation(prev => prev + text); },
+        () => { if (!streamAbortRef.current) setIsStreaming(false); }
+      ).catch(() => { if (!streamAbortRef.current) setIsStreaming(false); });
     }
 
     // Auto-advance after a delay
     setTimeout(() => {
+      streamAbortRef.current = true;
       if (index + 1 >= cards.length) {
         navigate('/results', { state: { cards, results: newResults, difficulty: currentDiff } });
       } else {
