@@ -64,6 +64,12 @@ export default function Results() {
         </div>
       </div>
 
+      {saveError && (
+        <div className="bg-warning/10 border border-warning/25 rounded-card px-4 py-2 mb-4 text-center animate-fadeIn">
+          <p className="text-xs text-warning">La session n'a pas pu être sauvegardée</p>
+        </div>
+      )}
+
       {/* Counters */}
       <div className="flex justify-center gap-6 mb-5 animate-fadeUp" style={{ animationDelay: '0.05s' }}>
         <div className="text-center">
