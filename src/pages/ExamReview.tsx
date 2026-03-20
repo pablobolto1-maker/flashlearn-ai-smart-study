@@ -22,20 +22,7 @@ export default function ExamReview() {
 
   const card: CardType | undefined = cards[index];
 
-  useEffect(() => {
-    if (!hasTimer || feedback) return;
-    setTimeLeft(30);
-    const t = setInterval(() => setTimeLeft(p => {
-      if (p <= 1) { clearInterval(t); handleSubmit(); return 0; }
-      return p - 1;
-    }), 1000);
-    return () => clearInterval(t);
-  }, [index, hasTimer, feedback]);
-
-  if (!cards.length) { navigate('/'); return null; }
-  if (!card) return null;
-
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async () => {
     if (loading) return;
     streamAbortRef.current = false;
     setLoading(true);
@@ -62,7 +49,17 @@ export default function ExamReview() {
       setResults([...results, false]);
     }
     setLoading(false);
-  };
+  }, [card, answer, results, loading, updateCard]);
+
+  useEffect(() => {
+    if (!hasTimer || feedback) return;
+    setTimeLeft(30);
+    const t = setInterval(() => setTimeLeft(p => {
+      if (p <= 1) { clearInterval(t); handleSubmit(); return 0; }
+      return p - 1;
+    }), 1000);
+    return () => clearInterval(t);
+  }, [index, hasTimer, feedback, handleSubmit]);
 
   const handleContinue = () => {
     streamAbortRef.current = true;
