@@ -32,8 +32,11 @@ export default function ExamReview() {
   if (!cards.length) { navigate('/'); return null; }
   if (!card) return null;
 
+  const streamAbortRef = useRef(false);
+
   const handleSubmit = async () => {
     if (loading) return;
+    streamAbortRef.current = false;
     setLoading(true);
     try {
       const result = await evaluateAnswer(card.front, card.back, answer);
@@ -45,9 +48,9 @@ export default function ExamReview() {
         getExplanationStream(
           card.front,
           card.back,
-          (text) => setExplanation(prev => prev + text),
-          () => setIsStreaming(false)
-        ).catch(() => setIsStreaming(false));
+          (text) => { if (!streamAbortRef.current) setExplanation(prev => prev + text); },
+          () => { if (!streamAbortRef.current) setIsStreaming(false); }
+        ).catch(() => { if (!streamAbortRef.current) setIsStreaming(false); });
       }
     } catch {
       setFeedback({ correct: false, feedback: 'Erreur lors de l\'évaluation' });
@@ -57,6 +60,7 @@ export default function ExamReview() {
   };
 
   const handleContinue = () => {
+    streamAbortRef.current = true;
     if (index + 1 >= cards.length) {
       navigate('/results', { state: { cards, results: [...results], difficulty } });
     } else {
