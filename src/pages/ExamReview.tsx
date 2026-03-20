@@ -7,6 +7,7 @@ import type { CardType } from '@/lib/types';
 export default function ExamReview() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { updateCard } = useCards();
   const { cards = [], timer: hasTimer, difficulty = 'easy' } = (location.state as any) || {};
 
   const [index, setIndex] = useState(0);
