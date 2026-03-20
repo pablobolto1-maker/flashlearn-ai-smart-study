@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { getExplanationStream } from '@/lib/ai';
 import type { CardType, Difficulty } from '@/lib/types';
