@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { getExplanationStream } from '@/lib/ai';
+import { useCards } from '@/hooks/useCards';
 import type { CardType, Difficulty } from '@/lib/types';
 
 function getDifficultyFromHistory(history: boolean[], currentDiff: Difficulty): { diff: Difficulty; changed: boolean } {
@@ -23,6 +24,7 @@ const diffLabels: Record<string, { label: string; color: string; bg: string }> =
 export default function Review() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { updateCard } = useCards();
   const { cards = [], mode, timer: hasTimer, difficulty: initDiff = 'easy' } = (location.state as any) || {};
 
   const [index, setIndex] = useState(0);
@@ -69,6 +71,11 @@ export default function Review() {
     const newHistory = [...history, correct];
     setResults(newResults);
     setHistory(newHistory);
+
+    // Update card score in DB
+    if (card.id) {
+      updateCard(card.id, { score: (card.score || 0) + (correct ? 1 : -1) }).catch(() => {});
+    }
 
     // Adaptive difficulty
     const { diff, changed } = getDifficultyFromHistory(newHistory, currentDiff);

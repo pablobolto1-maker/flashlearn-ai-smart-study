@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { evaluateAnswer, getExplanationStream } from '@/lib/ai';
+import { useCards } from '@/hooks/useCards';
 import type { CardType } from '@/lib/types';
 
 export default function ExamReview() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { updateCard } = useCards();
   const { cards = [], timer: hasTimer, difficulty = 'easy' } = (location.state as any) || {};
 
   const [index, setIndex] = useState(0);
@@ -41,6 +43,10 @@ export default function ExamReview() {
       const result = await evaluateAnswer(card.front, card.back, answer);
       setFeedback(result);
       setResults([...results, result.correct]);
+      // Update card score in DB
+      if (card.id) {
+        updateCard(card.id, { score: (card.score || 0) + (result.correct ? 1 : -1) }).catch(() => {});
+      }
       if (!result.correct && card) {
         setExplanation('');
         setIsStreaming(true);
