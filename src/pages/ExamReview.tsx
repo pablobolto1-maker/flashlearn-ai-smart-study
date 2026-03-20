@@ -16,6 +16,7 @@ export default function ExamReview() {
   const [timeLeft, setTimeLeft] = useState(30);
   const [explanation, setExplanation] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
+  const streamAbortRef = useRef(false);
 
   const card: CardType | undefined = cards[index];
 
@@ -31,8 +32,6 @@ export default function ExamReview() {
 
   if (!cards.length) { navigate('/'); return null; }
   if (!card) return null;
-
-  const streamAbortRef = useRef(false);
 
   const handleSubmit = async () => {
     if (loading) return;
