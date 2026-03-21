@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCards } from '@/hooks/useCards';
 import ConfirmModal from '@/components/ConfirmModal';
 import type { CardType } from '@/lib/types';
+
+const PAGE_SIZE = 20;
 
 const diffBadge: Record<string, { label: string; color: string; bg: string }> = {
   easy: { label: 'Facile', color: 'text-success', bg: 'bg-success/15' },
@@ -40,11 +42,19 @@ export default function Library() {
   const [filter, setFilter] = useState('all');
   const [newDeck, setNewDeck] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
 
-  useEffect(() => { fetchCards(); }, []);
+  useEffect(() => { fetchCards(); }, [fetchCards]);
+
+  const handleFilterChange = useCallback((deck: string) => {
+    setFilter(deck);
+    setPage(1);
+  }, []);
 
   const decks = ['all', ...Array.from(new Set(cards.map(c => c.deck)))];
   const filtered = filter === 'all' ? cards : cards.filter(c => c.deck === filter);
+  const displayed = filtered.slice(0, page * PAGE_SIZE);
+  const hasMore = filtered.length > page * PAGE_SIZE;
 
   const exportCSV = () => {
     const rows = [['Recto', 'Verso', 'Difficulté', 'Deck', 'Score']];
@@ -83,7 +93,7 @@ export default function Library() {
 
   const handleNewDeck = () => {
     if (newDeck.trim()) {
-      setFilter(newDeck.trim());
+      handleFilterChange(newDeck.trim());
       setNewDeck('');
     }
   };
@@ -117,7 +127,7 @@ export default function Library() {
       {/* Deck filters */}
       <div className="flex gap-2 flex-wrap mb-4 animate-fadeUp" style={{ animationDelay: '0.05s' }}>
         {decks.map(d => (
-          <button key={d} onClick={() => setFilter(d)}
+          <button key={d} onClick={() => handleFilterChange(d)}
             className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
               filter === d ? 'bg-accent-dim text-primary border border-accent-border' : 'bg-card border border-border text-muted-foreground'
             }`}>
@@ -135,9 +145,16 @@ export default function Library() {
 
       {loading && <p className="text-muted-foreground text-sm">Chargement...</p>}
 
+      {/* Compteur */}
+      {!loading && filtered.length > 0 && (
+        <p className="text-xs text-muted-foreground mb-3">
+          Affichage de {Math.min(displayed.length, filtered.length)} / {filtered.length} cartes
+        </p>
+      )}
+
       {/* Cards list */}
       <div className="space-y-2 animate-fadeUp" style={{ animationDelay: '0.1s' }}>
-        {filtered.map(card => {
+        {displayed.map(card => {
           const db = diffBadge[card.difficulty] || diffBadge.easy;
           return (
             <div key={card.id} className="bg-card border border-border rounded-card px-4 py-3 flex items-center gap-3 group">
@@ -164,6 +181,16 @@ export default function Library() {
           <p className="text-center text-muted-foreground text-sm py-8">Aucune carte trouvée</p>
         )}
       </div>
+
+      {/* Voir plus */}
+      {hasMore && (
+        <button
+          onClick={() => setPage(p => p + 1)}
+          className="w-full mt-4 py-2.5 rounded-btn text-sm text-muted-foreground bg-card border border-border btn-hover transition-colors"
+        >
+          Voir plus ({filtered.length - displayed.length} restantes)
+        </button>
+      )}
 
       <ConfirmModal
         open={!!deleteId}
