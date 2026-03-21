@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { generateCards } from '@/lib/ai';
 import { safeParseCards } from '@/lib/parseCards';
@@ -10,6 +10,15 @@ const CheckCircle = () => (
     <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
   </svg>
 );
+
+function getMessageFromPercent(p: number): string {
+  if (p >= 100) return 'Terminé !';
+  if (p >= 96)  return 'Sauvegarde...';
+  if (p >= 92)  return 'Traitement des cartes...';
+  if (p >= 65)  return 'Génération des cartes...';
+  if (p >= 30)  return 'Analyse du contenu...';
+  return 'Lecture du document...';
+}
 
 export default function Config() {
   const location = useLocation();
@@ -24,22 +33,12 @@ export default function Config() {
   const [generating, setGenerating] = useState(false);
   const [percent, setPercent] = useState(0);
   const [error, setError] = useState('');
-  const [loadingMessage, setLoadingMessage] = useState('Lecture du document...');
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Met à jour le message automatiquement selon le pourcentage
+  // Redirige si pas de texte — dans un useEffect, pas pendant le rendu
   useEffect(() => {
-    if (percent >= 96) setLoadingMessage('Sauvegarde...');
-    else if (percent >= 92) setLoadingMessage('Traitement des cartes...');
-    else if (percent >= 90) setLoadingMessage('Finalisation...');
-    else if (percent >= 65) setLoadingMessage('Génération des cartes...');
-    else if (percent >= 30) setLoadingMessage('Analyse du contenu...');
-    else if (percent > 0)   setLoadingMessage('Lecture du document...');
-  }, [percent]);
-
-  if (!text) {
-    navigate('/');
-    return null;
-  }
+    if (!text) navigate('/');
+  }, []);
 
   const actualCount = customCount ? Math.min(200, Math.max(1, parseInt(customCount) || 15)) : count;
 
@@ -52,13 +51,13 @@ export default function Config() {
     setGenerating(true);
     setPercent(1);
 
-    const interval = setInterval(() => {
+    intervalRef.current = setInterval(() => {
       setPercent(p => {
-        if (p < 28) return p + 3;
-        if (p < 65) return p + 2;
-        if (p < 90) return p + 1;
-        if (p < 99) return p + 0.3;
-        return p;
+        if (p >= 99) return p;
+        if (p >= 90) return p + 0.3;
+        if (p >= 65) return p + 1;
+        if (p >= 28) return p + 2;
+        return p + 3;
       });
     }, 400);
 
@@ -68,23 +67,24 @@ export default function Config() {
       const cards = safeParseCards(raw);
       setPercent(96);
       const saved = await saveCards(cards.map(c => ({ ...c, difficulty })));
-      clearInterval(interval);
+      if (intervalRef.current) clearInterval(intervalRef.current);
       setPercent(100);
-      setLoadingMessage('Terminé !');
       setTimeout(() => {
         const path = mode === 'exam' ? '/exam' : '/review';
         navigate(path, { state: { cards: saved, mode, timer, difficulty } });
-      }, 400);
+      }, 500);
     } catch (err: any) {
-      clearInterval(interval);
+      if (intervalRef.current) clearInterval(intervalRef.current);
       setError(err.message || 'Erreur lors de la génération');
       setGenerating(false);
       setPercent(0);
     }
   };
 
+  if (!text) return null;
+
   if (generating) {
-    return <LoadingScreen message={loadingMessage} percent={percent} />;
+    return <LoadingScreen message={getMessageFromPercent(percent)} percent={percent} />;
   }
 
   const diffOptions = [
