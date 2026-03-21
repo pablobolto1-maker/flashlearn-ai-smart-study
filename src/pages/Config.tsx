@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { generateCards } from '@/lib/ai';
 import { safeParseCards } from '@/lib/parseCards';
@@ -24,7 +24,17 @@ export default function Config() {
   const [generating, setGenerating] = useState(false);
   const [percent, setPercent] = useState(0);
   const [error, setError] = useState('');
-  const [loadingMessage, setLoadingMessage] = useState('Génération en cours...');
+  const [loadingMessage, setLoadingMessage] = useState('Lecture du document...');
+
+  // Met à jour le message automatiquement selon le pourcentage
+  useEffect(() => {
+    if (percent >= 96) setLoadingMessage('Sauvegarde...');
+    else if (percent >= 92) setLoadingMessage('Traitement des cartes...');
+    else if (percent >= 90) setLoadingMessage('Finalisation...');
+    else if (percent >= 65) setLoadingMessage('Génération des cartes...');
+    else if (percent >= 30) setLoadingMessage('Analyse du contenu...');
+    else if (percent > 0)   setLoadingMessage('Lecture du document...');
+  }, [percent]);
 
   if (!text) {
     navigate('/');
@@ -40,41 +50,23 @@ export default function Config() {
     }
     setError('');
     setGenerating(true);
-    setPercent(0);
+    setPercent(1);
 
-    const messages = [
-      { at: 0,  msg: 'Lecture du document...' },
-      { at: 30, msg: 'Analyse du contenu...' },
-      { at: 65, msg: 'Génération des cartes...' },
-      { at: 90, msg: 'Finalisation...' },
-    ];
-
-const interval = setInterval(() => {
-  setPercent(p => {
-    const next =
-      p < 28 ? p + 3 :
-      p < 65 ? p + 2 :
-      p < 90 ? p + 1 :
-      p < 99 ? p + 0.3 :
-      p;
-    return next;
-  });
-  setLoadingMessage(prev => {
-    const current = percent;
-    if (current >= 90) return 'Finalisation...';
-    if (current >= 65) return 'Génération des cartes...';
-    if (current >= 30) return 'Analyse du contenu...';
-    return 'Lecture du document...';
-  });
-}, 400);
+    const interval = setInterval(() => {
+      setPercent(p => {
+        if (p < 28) return p + 3;
+        if (p < 65) return p + 2;
+        if (p < 90) return p + 1;
+        if (p < 99) return p + 0.3;
+        return p;
+      });
+    }, 400);
 
     try {
       const raw = await generateCards(text, actualCount, difficulty);
       setPercent(92);
-      setLoadingMessage('Traitement des cartes...');
       const cards = safeParseCards(raw);
       setPercent(96);
-      setLoadingMessage('Sauvegarde...');
       const saved = await saveCards(cards.map(c => ({ ...c, difficulty })));
       clearInterval(interval);
       setPercent(100);
@@ -82,7 +74,7 @@ const interval = setInterval(() => {
       setTimeout(() => {
         const path = mode === 'exam' ? '/exam' : '/review';
         navigate(path, { state: { cards: saved, mode, timer, difficulty } });
-      }, 300);
+      }, 400);
     } catch (err: any) {
       clearInterval(interval);
       setError(err.message || 'Erreur lors de la génération');
