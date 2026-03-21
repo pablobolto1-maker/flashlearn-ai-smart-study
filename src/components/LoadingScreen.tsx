@@ -22,8 +22,10 @@ const SmallSpinner = () => (
 );
 
 export default function LoadingScreen({ message, percent }: Props) {
+  const displayPercent = Math.min(100, Math.round(percent));
+
   return (
-    <div className="min-h-[60vh] flex items-center justify-center px-4">
+    <div className="min-h-screen flex items-center justify-center px-4 bg-background">
       <div className="bg-card border border-border rounded-card p-8 w-full max-w-md animate-fadeUp text-center">
         {/* Spinner */}
         <div className="relative w-16 h-16 mx-auto mb-6">
@@ -36,13 +38,13 @@ export default function LoadingScreen({ message, percent }: Props) {
         </div>
 
         <p className="text-foreground font-medium mb-1">{message}</p>
-        <p className="text-primary text-2xl font-bold mb-6">{percent}%</p>
+        <p className="text-primary text-2xl font-bold mb-6">{displayPercent}%</p>
 
         {/* Steps */}
         <div className="space-y-2.5 mb-6 text-left">
           {steps.map((step, i) => {
-            const done = percent > step.range[1];
-            const active = percent >= step.range[0] && percent <= step.range[1];
+            const done = displayPercent > step.range[1];
+            const active = displayPercent >= step.range[0] && displayPercent <= step.range[1];
             return (
               <div key={i} className="flex items-center gap-3">
                 <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center ${
@@ -65,7 +67,7 @@ export default function LoadingScreen({ message, percent }: Props) {
           <div
             className="h-full rounded-full transition-all duration-500"
             style={{
-              width: `${percent}%`,
+              width: `${displayPercent}%`,
               background: 'linear-gradient(90deg, #0ea5e9, #22d3ee)',
             }}
           />
