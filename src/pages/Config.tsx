@@ -24,6 +24,7 @@ export default function Config() {
   const [generating, setGenerating] = useState(false);
   const [percent, setPercent] = useState(0);
   const [error, setError] = useState('');
+  const [loadingMessage, setLoadingMessage] = useState('Génération en cours...');
 
   if (!text) {
     navigate('/');
@@ -39,25 +40,42 @@ export default function Config() {
     }
     setError('');
     setGenerating(true);
-    setPercent(5);
+    setPercent(0);
+
+    const messages = [
+      { at: 0,  msg: 'Lecture du document...' },
+      { at: 30, msg: 'Analyse du contenu...' },
+      { at: 65, msg: 'Génération des cartes...' },
+      { at: 90, msg: 'Finalisation...' },
+    ];
 
     const interval = setInterval(() => {
       setPercent(p => {
-        if (p < 28) return p + 3;
-        if (p < 65) return p + 2;
-        if (p < 90) return p + 1;
-        return p;
+        const next =
+          p < 28 ? p + 3 :
+          p < 65 ? p + 2 :
+          p < 90 ? p + 1 :
+          p < 99 ? p + 0.3 :
+          p;
+
+        const found = [...messages].reverse().find(m => next >= m.at);
+        if (found) setLoadingMessage(found.msg);
+
+        return next;
       });
     }, 400);
 
     try {
       const raw = await generateCards(text, actualCount, difficulty);
       setPercent(92);
+      setLoadingMessage('Traitement des cartes...');
       const cards = safeParseCards(raw);
       setPercent(96);
+      setLoadingMessage('Sauvegarde...');
       const saved = await saveCards(cards.map(c => ({ ...c, difficulty })));
       clearInterval(interval);
       setPercent(100);
+      setLoadingMessage('Terminé !');
       setTimeout(() => {
         const path = mode === 'exam' ? '/exam' : '/review';
         navigate(path, { state: { cards: saved, mode, timer, difficulty } });
@@ -66,11 +84,12 @@ export default function Config() {
       clearInterval(interval);
       setError(err.message || 'Erreur lors de la génération');
       setGenerating(false);
+      setPercent(0);
     }
   };
 
   if (generating) {
-    return <LoadingScreen message="Génération en cours..." percent={percent} />;
+    return <LoadingScreen message={loadingMessage} percent={percent} />;
   }
 
   const diffOptions = [
@@ -81,7 +100,6 @@ export default function Config() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-10">
-      {/* Success banner */}
       <div className="flex items-center gap-3 bg-success/10 border border-success/25 rounded-card px-4 py-3 mb-6 animate-fadeUp">
         <CheckCircle />
         <div>
@@ -94,7 +112,6 @@ export default function Config() {
         <div className="bg-error/10 border border-error/30 text-error rounded-input px-3 py-2 text-sm mb-4">{error}</div>
       )}
 
-      {/* Mode */}
       <section className="mb-6 animate-fadeUp" style={{ animationDelay: '0.05s' }}>
         <h3 className="text-foreground text-sm font-semibold mb-3">Mode de révision</h3>
         <div className="flex gap-3">
@@ -110,7 +127,6 @@ export default function Config() {
         </div>
       </section>
 
-      {/* Timer toggle */}
       <section className="mb-6 animate-fadeUp" style={{ animationDelay: '0.1s' }}>
         <div className="flex items-center justify-between bg-card border border-border rounded-card px-4 py-3">
           <div>
@@ -123,7 +139,6 @@ export default function Config() {
         </div>
       </section>
 
-      {/* Card count */}
       <section className="mb-6 animate-fadeUp" style={{ animationDelay: '0.15s' }}>
         <h3 className="text-foreground text-sm font-semibold mb-3">Nombre de cartes</h3>
         <div className="flex gap-2 flex-wrap">
@@ -148,7 +163,6 @@ export default function Config() {
         </div>
       </section>
 
-      {/* Difficulty */}
       <section className="animate-fadeUp" style={{ animationDelay: '0.2s' }}>
         <h3 className="text-foreground text-sm font-semibold mb-3">Difficulté</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
