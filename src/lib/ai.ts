@@ -38,7 +38,8 @@ Réponds UNIQUEMENT avec un tableau JSON valide.
 Aucun texte avant ou après. Aucun markdown. Aucune explication.
 RÈGLE ABSOLUE : chaque carte DOIT être tirée EXCLUSIVEMENT du texte ci-dessous.
 Génère exactement ${adjustedCount} cartes de niveau ${difficulty} — ${instructions[difficulty] || instructions.easy}.
-FORMAT : [{"front":"...","back":"...","difficulty":"${difficulty}"}]
+FORMAT : [{"front":"...","back":"...","difficulty":"${difficulty}","deck":"nom du thème en 2-4 mots"}]
+RÈGLE DECK : le champ "deck" doit être identique pour toutes les cartes, court (2-4 mots), et résumer le thème principal du texte source.
 TEXTE SOURCE :
 ---
 ${processedText}

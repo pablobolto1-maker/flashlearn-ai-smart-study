@@ -67,7 +67,7 @@ function normalizeCard(c: any): CardType {
     front: c.front || '',
     back: c.back || '',
     difficulty: ['easy', 'medium', 'hard'].includes(c.difficulty) ? c.difficulty : 'easy',
-    deck: c.deck || 'Général',
+    deck: c.deck && c.deck.trim() !== '' ? c.deck.trim() : 'Général',
     score: c.score || 0,
   };
 }
