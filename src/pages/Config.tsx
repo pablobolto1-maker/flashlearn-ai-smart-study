@@ -49,21 +49,24 @@ export default function Config() {
       { at: 90, msg: 'Finalisation...' },
     ];
 
-    const interval = setInterval(() => {
-      setPercent(p => {
-        const next =
-          p < 28 ? p + 3 :
-          p < 65 ? p + 2 :
-          p < 90 ? p + 1 :
-          p < 99 ? p + 0.3 :
-          p;
-
-        const found = [...messages].reverse().find(m => next >= m.at);
-        if (found) setLoadingMessage(found.msg);
-
-        return next;
-      });
-    }, 400);
+const interval = setInterval(() => {
+  setPercent(p => {
+    const next =
+      p < 28 ? p + 3 :
+      p < 65 ? p + 2 :
+      p < 90 ? p + 1 :
+      p < 99 ? p + 0.3 :
+      p;
+    return next;
+  });
+  setLoadingMessage(prev => {
+    const current = percent;
+    if (current >= 90) return 'Finalisation...';
+    if (current >= 65) return 'Génération des cartes...';
+    if (current >= 30) return 'Analyse du contenu...';
+    return 'Lecture du document...';
+  });
+}, 400);
 
     try {
       const raw = await generateCards(text, actualCount, difficulty);
