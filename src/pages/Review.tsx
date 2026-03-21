@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useBlocker } from 'react-router-dom';
 import { getExplanationStream } from '@/lib/ai';
 import { useCards } from '@/hooks/useCards';
+import ConfirmModal from '@/components/ConfirmModal';
 import type { CardType, Difficulty } from '@/lib/types';
 
 function getDifficultyFromHistory(history: boolean[], currentDiff: Difficulty): { diff: Difficulty; changed: boolean } {
@@ -37,8 +38,15 @@ export default function Review() {
   const [explanation, setExplanation] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
   const [timeLeft, setTimeLeft] = useState(30);
+  const [finished, setFinished] = useState(false);
 
+  const streamAbortRef = useRef(false);
   const card: CardType | undefined = cards[index];
+
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      !finished && index > 0 && currentLocation.pathname !== nextLocation.pathname
+  );
 
   // Timer
   useEffect(() => {
@@ -62,8 +70,6 @@ export default function Review() {
     return () => window.removeEventListener('keydown', handler);
   }, [flipped, answered, index]);
 
-  const streamAbortRef = useRef(false);
-
   const handleAnswer = useCallback(async (correct: boolean) => {
     streamAbortRef.current = false;
     setAnswered(true);
@@ -72,12 +78,10 @@ export default function Review() {
     setResults(newResults);
     setHistory(newHistory);
 
-    // Update card score in DB
     if (card.id) {
       updateCard(card.id, { score: (card.score || 0) + (correct ? 1 : -1) }).catch(() => {});
     }
 
-    // Adaptive difficulty
     const { diff, changed } = getDifficultyFromHistory(newHistory, currentDiff);
     if (changed) {
       setCurrentDiff(diff);
@@ -85,7 +89,6 @@ export default function Review() {
       setTimeout(() => setDiffNotice(''), 3000);
     }
 
-    // Get explanation if wrong
     if (!correct && card) {
       setExplanation('');
       setIsStreaming(true);
@@ -97,10 +100,10 @@ export default function Review() {
       ).catch(() => { if (!streamAbortRef.current) setIsStreaming(false); });
     }
 
-    // Auto-advance after a delay
     setTimeout(() => {
       streamAbortRef.current = true;
       if (index + 1 >= cards.length) {
+        setFinished(true);
         navigate('/results', { state: { cards, results: newResults, difficulty: currentDiff } });
       } else {
         setIndex(i => i + 1);
@@ -120,6 +123,16 @@ export default function Review() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
+
+      {/* Modal confirmation quitter */}
+      <ConfirmModal
+        open={blocker.state === 'blocked'}
+        title="Quitter la révision ?"
+        message="Voulez-vous vraiment quitter ? Votre progression sera perdue."
+        onConfirm={() => blocker.proceed?.()}
+        onCancel={() => blocker.reset?.()}
+      />
+
       {/* Progress */}
       <div className="mb-4">
         <div className="flex items-center justify-between mb-2">
@@ -138,7 +151,6 @@ export default function Review() {
         </div>
       </div>
 
-      {/* Keyboard shortcuts hint */}
       <div className="flex justify-center gap-4 mb-4">
         <span className="text-xs text-text-muted-dark">Espace = retourner</span>
         <span className="text-xs text-text-muted-dark">&larr; = manqué</span>
@@ -151,7 +163,6 @@ export default function Review() {
         </div>
       )}
 
-      {/* Flip Card */}
       <div className="perspective-1000 mb-6" style={{ perspective: '1000px' }} onClick={() => !flipped && !answered && setFlipped(true)}>
         <div
           className="relative w-full min-h-[280px] cursor-pointer transition-transform duration-500"
@@ -161,12 +172,10 @@ export default function Review() {
             transitionTimingFunction: 'cubic-bezier(0.4,0,0.2,1)',
           }}
         >
-          {/* Front */}
           <div className="absolute inset-0 bg-card border border-border rounded-card p-8 flex flex-col justify-center items-center backface-hidden" style={{ backfaceVisibility: 'hidden' }}>
             <span className="text-xs text-muted-foreground uppercase tracking-wider mb-4">Question</span>
             <p className="text-foreground text-lg text-center leading-relaxed">{card.front}</p>
           </div>
-          {/* Back */}
           <div className="absolute inset-0 rounded-card p-8 flex flex-col justify-center items-center" style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)', backgroundColor: '#0C3A6B' }}>
             <span className="text-xs uppercase tracking-wider mb-4" style={{ color: 'rgba(255,255,255,0.6)' }}>Réponse</span>
             <p className="text-foreground text-lg text-center leading-relaxed">{card.back}</p>
@@ -174,7 +183,6 @@ export default function Review() {
         </div>
       </div>
 
-      {/* Answer buttons */}
       {flipped && !answered && (
         <div className="flex gap-3 justify-center animate-pop">
           <button onClick={() => handleAnswer(false)} className="px-6 py-2.5 rounded-btn text-sm font-medium bg-error/15 text-error border border-error/25 btn-hover transition-colors">
@@ -186,7 +194,6 @@ export default function Review() {
         </div>
       )}
 
-      {/* Explanation */}
       {(explanation || isStreaming) && (
         <div className="mt-4 bg-warning/10 border border-warning/25 rounded-card px-4 py-3 animate-fadeIn">
           <p className="text-sm text-foreground leading-relaxed">

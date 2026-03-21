@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useBlocker } from 'react-router-dom';
 import { evaluateAnswer, getExplanationStream } from '@/lib/ai';
 import { useCards } from '@/hooks/useCards';
+import ConfirmModal from '@/components/ConfirmModal';
 import type { CardType } from '@/lib/types';
 
 export default function ExamReview() {
@@ -18,9 +19,15 @@ export default function ExamReview() {
   const [timeLeft, setTimeLeft] = useState(30);
   const [explanation, setExplanation] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
+  const [finished, setFinished] = useState(false);
   const streamAbortRef = useRef(false);
 
   const card: CardType | undefined = cards[index];
+
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      !finished && index > 0 && currentLocation.pathname !== nextLocation.pathname
+  );
 
   const handleSubmit = useCallback(async () => {
     if (loading) return;
@@ -30,7 +37,6 @@ export default function ExamReview() {
       const result = await evaluateAnswer(card.front, card.back, answer);
       setFeedback(result);
       setResults([...results, result.correct]);
-      // Update card score in DB
       if (card.id) {
         updateCard(card.id, { score: (card.score || 0) + (result.correct ? 1 : -1) }).catch(() => {});
       }
@@ -67,6 +73,7 @@ export default function ExamReview() {
   const handleContinue = () => {
     streamAbortRef.current = true;
     if (index + 1 >= cards.length) {
+      setFinished(true);
       navigate('/results', { state: { cards, results: [...results], difficulty } });
     } else {
       setIndex(i => i + 1);
@@ -88,6 +95,16 @@ export default function ExamReview() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
+
+      {/* Modal confirmation quitter */}
+      <ConfirmModal
+        open={blocker.state === 'blocked'}
+        title="Quitter la révision ?"
+        message="Voulez-vous vraiment quitter ? Votre progression sera perdue."
+        onConfirm={() => blocker.proceed?.()}
+        onCancel={() => blocker.reset?.()}
+      />
+
       <div className="mb-4">
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs text-muted-foreground">{index + 1} / {cards.length}</span>
@@ -102,7 +119,6 @@ export default function ExamReview() {
         </div>
       </div>
 
-      {/* Question card */}
       <div className="bg-card border border-border rounded-card p-8 mb-4 animate-fadeUp">
         <span className="text-xs text-muted-foreground uppercase tracking-wider">Question</span>
         <p className="text-foreground text-lg mt-3 leading-relaxed">{card.front}</p>
