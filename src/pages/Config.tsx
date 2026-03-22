@@ -11,13 +11,21 @@ const CheckCircle = () => (
   </svg>
 );
 
+const MESSAGES: Record<number, string> = {
+  0:  'Démarrage...',
+  10: 'Lecture du document...',
+  30: 'Analyse du contenu...',
+  60: 'Génération des cartes...',
+  85: 'Génération en cours...',
+  92: 'Traitement des cartes...',
+  96: 'Sauvegarde...',
+  100: 'Terminé !',
+};
+
 function getMessageFromPercent(p: number): string {
-  if (p >= 100) return 'Terminé !';
-  if (p >= 96)  return 'Sauvegarde...';
-  if (p >= 92)  return 'Traitement des cartes...';
-  if (p >= 65)  return 'Génération des cartes...';
-  if (p >= 30)  return 'Analyse du contenu...';
-  return 'Lecture du document...';
+  const keys = Object.keys(MESSAGES).map(Number).sort((a, b) => b - a);
+  const key = keys.find(k => p >= k) ?? 0;
+  return MESSAGES[key];
 }
 
 export default function Config() {
@@ -34,13 +42,24 @@ export default function Config() {
   const [percent, setPercent] = useState(0);
   const [error, setError] = useState('');
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const mountedRef = useRef(true);
 
-  // Redirige si pas de texte — dans un useEffect, pas pendant le rendu
   useEffect(() => {
+    mountedRef.current = true;
     if (!text) navigate('/');
+    return () => {
+      mountedRef.current = false;
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
   }, []);
 
-  const actualCount = customCount ? Math.min(200, Math.max(1, parseInt(customCount) || 15)) : count;
+  const safeSetPercent = (v: number) => {
+    if (mountedRef.current) setPercent(v);
+  };
+
+  const actualCount = customCount
+    ? Math.min(200, Math.max(1, parseInt(customCount) || 15))
+    : count;
 
   const handleGenerate = async (difficulty: string) => {
     if (text.length < 50) {
@@ -49,35 +68,44 @@ export default function Config() {
     }
     setError('');
     setGenerating(true);
-    setPercent(1);
+    safeSetPercent(10);
 
+    // Animation lente de 10% à 60% pendant que Gemini génère
+    let current = 10;
     intervalRef.current = setInterval(() => {
-      setPercent(p => {
-        if (p >= 99) return p;
-        if (p >= 90) return p + 0.3;
-        if (p >= 65) return p + 1;
-        if (p >= 28) return p + 2;
-        return p + 3;
-      });
-    }, 400);
+      if (!mountedRef.current) return;
+      current = current < 58 ? current + 1 : current;
+      safeSetPercent(current);
+    }, 300);
 
     try {
       const raw = await generateCards(text, actualCount, difficulty);
-      setPercent(92);
-      const cards = safeParseCards(raw);
-      setPercent(96);
-      const saved = await saveCards(cards.map(c => ({ ...c, difficulty })));
+
       if (intervalRef.current) clearInterval(intervalRef.current);
-      setPercent(100);
-      setTimeout(() => {
+      safeSetPercent(85);
+
+      await new Promise(r => setTimeout(r, 200));
+      const cards = safeParseCards(raw);
+
+      safeSetPercent(92);
+      await new Promise(r => setTimeout(r, 200));
+
+      const saved = await saveCards(cards.map(c => ({ ...c, difficulty })));
+
+      safeSetPercent(100);
+      await new Promise(r => setTimeout(r, 600));
+
+      if (mountedRef.current) {
         const path = mode === 'exam' ? '/exam' : '/review';
         navigate(path, { state: { cards: saved, mode, timer, difficulty } });
-      }, 500);
+      }
     } catch (err: any) {
       if (intervalRef.current) clearInterval(intervalRef.current);
-      setError(err.message || 'Erreur lors de la génération');
-      setGenerating(false);
-      setPercent(0);
+      if (mountedRef.current) {
+        setError(err.message || 'Erreur lors de la génération');
+        setGenerating(false);
+        setPercent(0);
+      }
     }
   };
 
@@ -114,8 +142,7 @@ export default function Config() {
             <button key={m} onClick={() => setMode(m)}
               className={`flex-1 py-2.5 rounded-btn text-sm font-medium border transition-colors btn-hover ${
                 mode === m ? 'bg-accent-dim border-accent-border text-primary' : 'bg-card border-border text-muted-foreground hover:border-border-hover'
-              }`}
-            >
+              }`}>
               {m === 'classic' ? 'Classique' : 'Examen'}
             </button>
           ))}
@@ -141,16 +168,12 @@ export default function Config() {
             <button key={n} onClick={() => { setCount(n); setCustomCount(''); }}
               className={`px-4 py-2 rounded-btn text-sm font-medium border transition-colors btn-hover ${
                 count === n && !customCount ? 'bg-accent-dim border-accent-border text-primary' : 'bg-card border-border text-muted-foreground hover:border-border-hover'
-              }`}
-            >
+              }`}>
               {n}
             </button>
           ))}
           <input
-            type="number"
-            min={1}
-            max={200}
-            value={customCount}
+            type="number" min={1} max={200} value={customCount}
             onChange={e => setCustomCount(e.target.value)}
             placeholder="Personnalisé"
             className="w-28 bg-card border border-border rounded-input px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary transition-colors"
@@ -163,8 +186,7 @@ export default function Config() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {diffOptions.map(d => (
             <button key={d.key} onClick={() => handleGenerate(d.key)}
-              className="bg-card border border-border rounded-card p-4 text-left hover:border-border-hover btn-hover transition-colors group"
-            >
+              className="bg-card border border-border rounded-card p-4 text-left hover:border-border-hover btn-hover transition-colors group">
               <div className="flex items-center justify-between mb-1">
                 <span className={`text-sm font-semibold ${d.color}`}>{d.label}</span>
                 <span className={`text-xs ${d.bg} ${d.color} px-2 py-0.5 rounded-full`}>{actualCount}</span>

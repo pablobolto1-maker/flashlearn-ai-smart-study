@@ -22,55 +22,59 @@ const SmallSpinner = () => (
 );
 
 export default function LoadingScreen({ message, percent }: Props) {
-  const displayPercent = Math.min(100, Math.round(percent));
+  const displayPercent = Math.min(100, Math.max(0, Math.round(percent)));
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-background">
-      <div className="bg-card border border-border rounded-card p-8 w-full max-w-md animate-fadeUp text-center">
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 16px', backgroundColor: 'var(--background, #0a0a0a)' }}>
+      <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '12px', padding: '32px', width: '100%', maxWidth: '420px', textAlign: 'center' }}>
+
         {/* Spinner */}
-        <div className="relative w-16 h-16 mx-auto mb-6">
-          <div className="absolute inset-0 rounded-full border-2 border-border" />
-          <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-primary animate-spin-slow" />
-          <div className="absolute inset-2 rounded-full border-2 border-transparent border-b-primary animate-spin-reverse" />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-2.5 h-2.5 rounded-full bg-primary animate-pulse-dot" />
+        <div style={{ position: 'relative', width: '64px', height: '64px', margin: '0 auto 24px' }}>
+          <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: '2px solid var(--border)' }} />
+          <div className="animate-spin-slow" style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: '2px solid transparent', borderTopColor: 'var(--primary)' }} />
+          <div className="animate-spin-reverse" style={{ position: 'absolute', inset: '8px', borderRadius: '50%', border: '2px solid transparent', borderBottomColor: 'var(--primary)' }} />
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div className="animate-pulse-dot" style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'var(--primary)' }} />
           </div>
         </div>
 
-        <p className="text-foreground font-medium mb-1">{message}</p>
-        <p className="text-primary text-2xl font-bold mb-6">{displayPercent}%</p>
+        <p style={{ color: 'var(--foreground)', fontWeight: 500, marginBottom: '4px' }}>{message}</p>
+        <p style={{ color: 'var(--primary)', fontSize: '28px', fontWeight: 700, marginBottom: '24px' }}>{displayPercent}%</p>
 
         {/* Steps */}
-        <div className="space-y-2.5 mb-6 text-left">
+        <div style={{ marginBottom: '24px', textAlign: 'left' }}>
           {steps.map((step, i) => {
             const done = displayPercent > step.range[1];
             const active = displayPercent >= step.range[0] && displayPercent <= step.range[1];
             return (
-              <div key={i} className="flex items-center gap-3">
-                <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center ${
-                  done ? 'bg-success/20 text-success' : active ? 'bg-accent-dim text-primary' : 'bg-muted text-muted-foreground'
-                }`}>
-                  {done ? <CheckIcon /> : active ? <SmallSpinner /> : <span className="text-xs">{i + 1}</span>}
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
+                <div style={{
+                  flexShrink: 0, width: '24px', height: '24px', borderRadius: '50%',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: done ? 'rgba(34,197,94,0.2)' : active ? 'var(--accent)' : 'var(--muted)',
+                  color: done ? '#22c55e' : active ? 'var(--primary)' : 'var(--muted-foreground)',
+                }}>
+                  {done ? <CheckIcon /> : active ? <SmallSpinner /> : <span style={{ fontSize: '11px' }}>{i + 1}</span>}
                 </div>
-                <span className={`text-sm ${done ? 'text-foreground' : active ? 'text-primary' : 'text-muted-foreground'}`}>
+                <span style={{ fontSize: '14px', color: done ? 'var(--foreground)' : active ? 'var(--primary)' : 'var(--muted-foreground)', flex: 1 }}>
                   {step.label}
                 </span>
-                {done && <span className="ml-auto text-xs bg-success/15 text-success px-2 py-0.5 rounded-full">Terminé</span>}
-                {active && <span className="ml-auto text-xs bg-accent-dim text-primary px-2 py-0.5 rounded-full">En cours</span>}
+                {done && <span style={{ fontSize: '11px', background: 'rgba(34,197,94,0.15)', color: '#22c55e', padding: '2px 8px', borderRadius: '999px' }}>Terminé</span>}
+                {active && <span style={{ fontSize: '11px', background: 'var(--accent)', color: 'var(--primary)', padding: '2px 8px', borderRadius: '999px' }}>En cours</span>}
               </div>
             );
           })}
         </div>
 
         {/* Progress bar */}
-        <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-          <div
-            className="h-full rounded-full transition-all duration-500"
-            style={{
-              width: `${displayPercent}%`,
-              background: 'linear-gradient(90deg, #0ea5e9, #22d3ee)',
-            }}
-          />
+        <div style={{ height: '6px', background: 'var(--muted)', borderRadius: '999px', overflow: 'hidden' }}>
+          <div style={{
+            height: '100%',
+            borderRadius: '999px',
+            width: `${displayPercent}%`,
+            background: 'linear-gradient(90deg, #0ea5e9, #22d3ee)',
+            transition: 'width 0.8s ease',
+          }} />
         </div>
       </div>
     </div>
